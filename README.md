@@ -57,7 +57,7 @@ Możesz pobrać plik JSON tego przepływu pracy [tutaj](ścieżka/do/twojego/pli
 **Node typu:** `googleDrive` (operacja `folder` → `name`)
 **Parametry kluczowe:**
 
-* `name`: ciąg znaków z dzisiejszą datą (np. „2025-06-01”)
+* `name`: ciąg znaków z dzisiejszą datą `{{$now.format('yyyy-MM-dd')}}` (np. „2025-06-01”)
 * `driveId`: „My Drive”
 * `folderId`: ID głównego folderu „RecPLK” (rodzic, w którym utworzymy nowy folder)
 
