@@ -1,0 +1,1315 @@
+[
+  {
+    "createdAt": "2025-06-01T13:43:08.807Z",
+    "updatedAt": "2025-06-01T13:49:06.000Z",
+    "id": "DneRGAgdGaQRobIH",
+    "name": "RecPLK",
+    "active": false,
+    "isArchived": false,
+    "nodes": [
+      {
+        "parameters": {
+          "content": "### pobierz listę nagrań\npobiera listę nagrań z dnia poprzedniego",
+          "height": 380,
+          "width": 220
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -680,
+          400
+        ],
+        "typeVersion": 1,
+        "id": "62460bb6-7fd2-4c72-a297-38f65dbf11f3",
+        "name": "Sticky Note"
+      },
+      {
+        "parameters": {},
+        "type": "n8n-nodes-base.manualTrigger",
+        "typeVersion": 1,
+        "position": [
+          -2280,
+          560
+        ],
+        "id": "f35051a7-253b-4f07-bce2-3c36751db4a2",
+        "name": "When clicking ‘Test workflow’"
+      },
+      {
+        "parameters": {
+          "jsCode": "const inputItemJson = $input.first().json; // Pobiera obiekt JSON z pierwszego elementu wejściowego\nconst contentArray = inputItemJson.content;\nconst extractedItems = [];\n\nif (Array.isArray(contentArray)) {\n  for (const item of contentArray) { // 'item' to pojedynczy obiekt z contentArray\n    extractedItems.push({\n      json: { // Każdy zwracany element musi mieć klucz 'json'\n        // Poniżej użyj właściwych nazw pól z Twoich danych wejściowych:\n        calledNr: item.calledUserPart,   // LUB item.otherNumber - wybierz właściwe\n        dataCzas: item.establishedTime, // LUB item.startTime - wybierz właściwe\n        recNr: item.recordingNumber,   // LUB item.callingUserPart - wybierz właściwe\n        recID: item.recId              // Zwróć uwagę na poprawną wielkość liter 'recId'\n      }\n    });\n  }\n}\n\nreturn extractedItems; // Zwraca tablicę elementów, które będą przetwarzane dalej"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -380,
+          540
+        ],
+        "id": "564d3721-53e6-4838-a472-8fda3044a653",
+        "name": "Code"
+      },
+      {
+        "parameters": {
+          "url": "https://nagrywanie.plus.pl/recordingApi/recordingsPaged/?",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBasicAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "status",
+                "value": "RECORDED"
+              },
+              {
+                "name": "dateFrom",
+                "value": "={{$now.minus({days: 1}).startOf('day').format('yyyy-MM-dd\\'T\\'HH:mm:ss')}}"
+              },
+              {
+                "name": "status",
+                "value": "RECORDED"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          -620,
+          540
+        ],
+        "id": "ae1e8b1b-6cb1-4a0a-8f68-03ffd12889d4",
+        "name": "Rec HTTP Req",
+        "notesInFlow": true,
+        "credentials": {
+          "httpBasicAuth": {
+            "id": "FwhiOOuiEi2aKfjz",
+            "name": "RecVPBX user.example@net.pl"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "url": "=https://nagrywanie.plus.pl/recordingApi/recording/{{ $json.recID }}",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpBasicAuth",
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          780,
+          560
+        ],
+        "id": "42380632-9308-4422-8178-9d3ba85cba2b",
+        "name": "HTTP Req Download",
+        "credentials": {
+          "httpBasicAuth": {
+            "id": "FwhiOOuiEi2aKfjz",
+            "name": "RecVPBX user.example@net.pl"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "outputPrefix": "=rec"
+        },
+        "type": "n8n-nodes-base.compression",
+        "typeVersion": 1.1,
+        "position": [
+          960,
+          560
+        ],
+        "id": "366530bb-299f-45fb-8ce6-0116498b8712",
+        "name": "Compression"
+      },
+      {
+        "parameters": {
+          "options": {
+            "reset": false
+          }
+        },
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          520,
+          540
+        ],
+        "id": "9fdca27f-be36-4f14-aa15-64e1692dea29",
+        "name": "Loop Over Items",
+        "executeOnce": false,
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "resource": "audio",
+          "operation": "transcribe",
+          "binaryPropertyName": "=rec0",
+          "options": {
+            "language": "pl"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.openAi",
+        "typeVersion": 1.8,
+        "position": [
+          1280,
+          560
+        ],
+        "id": "6639619b-54ca-4f78-b4bd-7251a37ca9f0",
+        "name": "OpenAI",
+        "credentials": {
+          "openAiApi": {
+            "id": "GZCqheLwSL3lLdVS",
+            "name": "OpenAi account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "resource": "folder",
+          "name": "={{ $now.format('yyyy-MM-dd') }}",
+          "driveId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "My Drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "folderID",
+            "mode": "list",
+            "cachedResultName": "RecPLK",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/folderID"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          -1520,
+          700
+        ],
+        "id": "203bc356-4037-4cb3-884a-891e02fd47f4",
+        "name": "utwórz folder z data nagrań",
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "7H06lfp3n07xyW9K",
+            "name": "Google Drive user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "copy",
+          "fileId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "fileID"
+          },
+          "name": "=lista nagrań {{ $now.format('yyyy-MM-dd') }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          -1320,
+          700
+        ],
+        "id": "e5c81e36-98de-4476-b146-a741f0d7bcc0",
+        "name": "skopiuj szablon",
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "7H06lfp3n07xyW9K",
+            "name": "Google Drive user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "c68d1aee-056e-48a5-b010-e18a91527fcf",
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -1800,
+          560
+        ],
+        "id": "67bd1c37-bc6d-4f55-99ad-96aaad889766",
+        "name": "If qTrueFolderExists"
+      },
+      {
+        "parameters": {
+          "resource": "fileFolder",
+          "queryString": "={{ $now.format('yyyy-MM-dd') }}",
+          "filter": {
+            "folderId": {
+              "__rl": true,
+              "value": "folderId",
+              "mode": "list",
+              "cachedResultName": "RecPLK",
+              "cachedResultUrl": "https://drive.google.com/drive/folders/folderId"
+            },
+            "whatToSearch": "folders"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          -2020,
+          560
+        ],
+        "id": "0f7e87ee-fc31-4415-a6fd-7a70b83e22ba",
+        "name": "Google qFolderExists",
+        "alwaysOutputData": true,
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "7H06lfp3n07xyW9K",
+            "name": "Google Drive user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "15175398-a921-465b-9852-7f48309ab2aa",
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "exists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          -1320,
+          440
+        ],
+        "id": "7d91c776-658d-4d76-a528-a48564b1e669",
+        "name": "If qFileExists"
+      },
+      {
+        "parameters": {
+          "resource": "fileFolder",
+          "queryString": "=lista nagrań {{ $now.format('yyyy-MM-dd') }}",
+          "returnAll": true,
+          "filter": {
+            "driveId": {
+              "__rl": true,
+              "value": "My Drive",
+              "mode": "list",
+              "cachedResultName": "My Drive",
+              "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+            },
+            "whatToSearch": "files"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          -1520,
+          440
+        ],
+        "id": "242c22c0-6ba5-444b-9146-c6d9fa52cefe",
+        "name": "Google qFileExists",
+        "alwaysOutputData": true,
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "7H06lfp3n07xyW9K",
+            "name": "Google Drive user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "appendOrUpdate",
+          "documentId": {
+            "__rl": true,
+            "value": "={{ $('idFileSheets').item.json.IdFileSheetListRec[0].id }}",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "listaREC",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/sheetsID/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "calledNr": "={{ $json.calledNr }}",
+              "dataCzas": "={{ $json.dataCzas }}",
+              "recNr": "={{ $json.recNr }}",
+              "recID": "={{ $json.recID }}",
+              "treść": "brak"
+            },
+            "matchingColumns": [
+              "calledNr"
+            ],
+            "schema": [
+              {
+                "id": "calledNr",
+                "displayName": "calledNr",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "dataCzas",
+                "displayName": "dataCzas",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "recNr",
+                "displayName": "recNr",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "recID",
+                "displayName": "recID",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              },
+              {
+                "id": "treść",
+                "displayName": "treść",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.6,
+        "position": [
+          -180,
+          540
+        ],
+        "id": "7087098c-97cf-4601-8e05-04c38c1a0cab",
+        "name": "Sheets addRows",
+        "alwaysOutputData": true,
+        "notesInFlow": true,
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "2lCYxhsa3SHBhYsp",
+            "name": "Google Sheets user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "aggregate": "aggregateAllItemData",
+          "destinationFieldName": "IdFileSheetListRec",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.aggregate",
+        "typeVersion": 1,
+        "position": [
+          -1040,
+          540
+        ],
+        "id": "288139f0-8afa-43f2-884c-8be8b677167f",
+        "name": "idFileSheets",
+        "alwaysOutputData": true
+      },
+      {
+        "parameters": {
+          "resource": "fileFolder",
+          "queryString": "={{ $now.format('yyyy-MM-dd') }}",
+          "filter": {
+            "folderId": {
+              "__rl": true,
+              "value": "folderId",
+              "mode": "list",
+              "cachedResultName": "RecPLK",
+              "cachedResultUrl": "https://drive.google.com/drive/folders/folderId"
+            },
+            "whatToSearch": "folders"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          -860,
+          540
+        ],
+        "id": "968aea0e-9525-432e-81f9-30fc528df36e",
+        "name": "getFolderId",
+        "executeOnce": true,
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "7H06lfp3n07xyW9K",
+            "name": "Google Drive user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "operation": "update",
+          "documentId": {
+            "__rl": true,
+            "value": "={{ $('idFileSheets').item.json.IdFileSheetListRec[0].id }}",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "listaREC",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/sheetsID/edit#gid=0"
+          },
+          "columns": {
+            "mappingMode": "defineBelow",
+            "value": {
+              "treść": "={{ $json.text }}",
+              "recID": "={{ $('Loop Over Items').item.json.recID }}"
+            },
+            "matchingColumns": [
+              "recID"
+            ],
+            "schema": [
+              {
+                "id": "calledNr",
+                "displayName": "calledNr",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "dataCzas",
+                "displayName": "dataCzas",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "recNr",
+                "displayName": "recNr",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": true
+              },
+              {
+                "id": "recID",
+                "displayName": "recID",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "treść",
+                "displayName": "treść",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "removed": false
+              },
+              {
+                "id": "row_number",
+                "displayName": "row_number",
+                "required": false,
+                "defaultMatch": false,
+                "display": true,
+                "type": "string",
+                "canBeUsedToMatch": true,
+                "readOnly": true,
+                "removed": true
+              }
+            ],
+            "attemptToConvertTypes": false,
+            "convertFieldsToString": false
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.6,
+        "position": [
+          1480,
+          560
+        ],
+        "id": "ade446c3-ef4a-4002-a30b-24ea1071a40e",
+        "name": "Google Sheets1",
+        "alwaysOutputData": true,
+        "executeOnce": true,
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "2lCYxhsa3SHBhYsp",
+            "name": "Google Sheets user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "inputDataFieldName": "rec0",
+          "name": "={{ $json.dataCzas }}-{{ $json.recID }}",
+          "driveId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "My Drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $('getFolderId').item.json.id }}",
+            "mode": "id"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleDrive",
+        "typeVersion": 3,
+        "position": [
+          1280,
+          780
+        ],
+        "id": "e53cd815-ddf6-4cb4-885c-2b82ef7d83c3",
+        "name": "Google Drive",
+        "credentials": {
+          "googleDriveOAuth2Api": {
+            "id": "7H06lfp3n07xyW9K",
+            "name": "Google Drive user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 2
+            },
+            "conditions": [
+              {
+                "id": "a2a683a5-0009-4c07-a54c-51b2a323d0fa",
+                "leftValue": "={{ $json.recID }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "number",
+                  "operation": "notExists",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          260,
+          540
+        ],
+        "id": "08570de3-9920-4358-a893-e3124466f1ff",
+        "name": "If"
+      },
+      {
+        "parameters": {
+          "content": "wyszukaj folder\n\n`{{$now.format('yyyy-MM-dd')}} `\n\n",
+          "height": 340,
+          "width": 260
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -2100,
+          440
+        ],
+        "typeVersion": 1,
+        "id": "0c6701fb-9107-4da0-9447-eb1715d6362b",
+        "name": "Sticky Note2"
+      },
+      {
+        "parameters": {
+          "content": "sprawdź czy istnieje folder\n`{{$now.format('yyyy-mm-dd'}}`\n\nsprawdź czy istnieje plik\n`lista nagrań {{$now.format('yyyy-mm-dd'}}`",
+          "height": 680,
+          "width": 480
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -1600,
+          240
+        ],
+        "typeVersion": 1,
+        "id": "936ff1a6-5002-48d2-b148-2687149a2e61",
+        "name": "Sticky Note3"
+      },
+      {
+        "parameters": {
+          "content": "pobierz elementy listy nagrań",
+          "height": 380,
+          "width": 180,
+          "color": 5
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -420,
+          400
+        ],
+        "typeVersion": 1,
+        "id": "73efae05-4c26-494c-85c5-b93a079e0fb3",
+        "name": "Sticky Note4"
+      },
+      {
+        "parameters": {
+          "content": "czy w sheets istnieją jeszcze wiersze z \n`treścią: brak`",
+          "height": 240
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          200,
+          420
+        ],
+        "typeVersion": 1,
+        "id": "ed87a086-e35d-45dd-998e-084cd4c98491",
+        "name": "Sticky Note5"
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "={{ $('idFileSheets').item.json.IdFileSheetListRec[0].id }}",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "listaREC",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/sheetsID/edit#gid=0"
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.6,
+        "position": [
+          780,
+          20
+        ],
+        "id": "ff6067fe-88a8-4cd6-b9ff-6cae8e55f735",
+        "name": "Google Sheets",
+        "alwaysOutputData": true,
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "2lCYxhsa3SHBhYsp",
+            "name": "Google Sheets user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Zwraca tablicę wszystkich wartości z kolumny 'city'\nconst treść = items.map(item => item.json.treść);\nreturn [\n  {\n    json: {\n      treść\n    }\n  }\n];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1000,
+          20
+        ],
+        "id": "f41b2d66-eec0-45e2-ad1f-e2390b802e80",
+        "name": "Code1"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json['treść'] }}",
+          "options": {
+            "systemMessage": "=Otrzymujesz tablicę z nagraniami rozmów telefonicznych w formie tekstowej:\n`[\"tekst rozmowy 1\", \"tekst rozmowy 2\", ..., \"tekst rozmowy N\"]`.\n\nNa podstawie treści ocen ton i emocje rozmówców. W 3–4 zdaniach podsumuj ogólny sentyment tych rozmów, używając określeń:\n**przyjazny**, **miły**, **neutralny**, **sfrustrowany**, **nieprzyjemny**.\n\nSkup się na ogólnym wrażeniu z całego dnia. Nie podawaj analizy pojedynczych rozmów.\n"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 2,
+        "position": [
+          1180,
+          20
+        ],
+        "id": "afa195d7-dee2-47ab-8904-1f5da83a0b26",
+        "name": "AI Agent"
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "=https://api2.multiinfo.plus.pl/Api61/sendsmslong.aspx?",
+          "provideSslCertificates": true,
+          "sendQuery": true,
+          "queryParameters": {
+            "parameters": [
+              {
+                "name": "dest",
+                "value": "48XXXXXXXXX"
+              },
+              {
+                "name": "text",
+                "value": "={{ $json.output }}"
+              },
+              {
+                "name": "login",
+                "value": "example.user.api"
+              },
+              {
+                "name": "password",
+                "value": "password"
+              },
+              {
+                "name": "serviceId",
+                "value": "xxxxx"
+              },
+              {
+                "name": "advancedEncoding",
+                "value": "true"
+              }
+            ]
+          },
+          "options": {
+            "allowUnauthorizedCerts": false
+          }
+        },
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.2,
+        "position": [
+          1580,
+          20
+        ],
+        "id": "1b162e2c-facd-4106-8bc5-24d264dcc213",
+        "name": "HTTP Request",
+        "alwaysOutputData": true,
+        "credentials": {
+          "httpSslAuth": {
+            "id": "e0eK3BnHnpNJh0R4",
+            "name": "SSL Certificates account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "documentId": {
+            "__rl": true,
+            "value": "={{ $('idFileSheets').item.json.IdFileSheetListRec[0].id }}",
+            "mode": "id"
+          },
+          "sheetName": {
+            "__rl": true,
+            "value": "gid=0",
+            "mode": "list",
+            "cachedResultName": "listaREC",
+            "cachedResultUrl": "https://docs.google.com/spreadsheets/d/sheetsID/edit#gid=0"
+          },
+          "filtersUI": {
+            "values": [
+              {
+                "lookupColumn": "treść",
+                "lookupValue": "brak"
+              }
+            ]
+          },
+          "options": {}
+        },
+        "type": "n8n-nodes-base.googleSheets",
+        "typeVersion": 4.6,
+        "position": [
+          60,
+          540
+        ],
+        "id": "cdf202c9-d2b4-4053-90a8-734e4e93001a",
+        "name": "Google GetRowBrak",
+        "executeOnce": true,
+        "alwaysOutputData": true,
+        "credentials": {
+          "googleSheetsOAuth2Api": {
+            "id": "2lCYxhsa3SHBhYsp",
+            "name": "Google Sheets user.example@gmail.com"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "mistral-large-latest",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+        "typeVersion": 1,
+        "position": [
+          1140,
+          220
+        ],
+        "id": "31220f85-6d2b-44d0-9d6b-3a996bcac2b2",
+        "name": "Mistral Cloud Chat Model",
+        "credentials": {
+          "mistralCloudApi": {
+            "id": "7X8o7VvlzKZsAIwz",
+            "name": "Mistral Cloud account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "content": "# 1",
+          "height": 980,
+          "width": 1060,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -2160,
+          40
+        ],
+        "typeVersion": 1,
+        "id": "6eefc67b-9279-42df-951e-71c5d4f1cb65",
+        "name": "Sticky Note6"
+      },
+      {
+        "parameters": {
+          "content": "# 2",
+          "height": 980,
+          "width": 340,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -1080,
+          40
+        ],
+        "typeVersion": 1,
+        "id": "83047afe-5b61-4a0a-b065-64532eb6f035",
+        "name": "Sticky Note7"
+      },
+      {
+        "parameters": {
+          "content": "# 3",
+          "height": 980,
+          "width": 280,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -720,
+          40
+        ],
+        "typeVersion": 1,
+        "id": "8d839064-da87-43dc-9540-662da388f1cb",
+        "name": "Sticky Note8"
+      },
+      {
+        "parameters": {
+          "content": "# 4",
+          "height": 980,
+          "width": 380,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          -420,
+          40
+        ],
+        "typeVersion": 1,
+        "id": "f62885eb-a6e6-4233-bcc8-d2a2e377ab2a",
+        "name": "Sticky Note9"
+      },
+      {
+        "parameters": {
+          "content": "# 5",
+          "height": 640,
+          "width": 1800,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          0,
+          380
+        ],
+        "typeVersion": 1,
+        "id": "2cdd26b4-fd4b-4363-bf41-54152bd636cb",
+        "name": "Sticky Note10"
+      },
+      {
+        "parameters": {
+          "content": "# 6",
+          "height": 360,
+          "width": 1780,
+          "color": 6
+        },
+        "type": "n8n-nodes-base.stickyNote",
+        "position": [
+          0,
+          0
+        ],
+        "typeVersion": 1,
+        "id": "26f351ab-c738-4ea0-8da3-b4fa5c194012",
+        "name": "Sticky Note11"
+      }
+    ],
+    "connections": {
+      "When clicking ‘Test workflow’": {
+        "main": [
+          [
+            {
+              "node": "Google qFolderExists",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code": {
+        "main": [
+          [
+            {
+              "node": "Sheets addRows",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Rec HTTP Req": {
+        "main": [
+          [
+            {
+              "node": "Code",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "HTTP Req Download": {
+        "main": [
+          [
+            {
+              "node": "Compression",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Compression": {
+        "main": [
+          [
+            {
+              "node": "OpenAI",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Google Drive",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Loop Over Items": {
+        "main": [
+          [],
+          [
+            {
+              "node": "HTTP Req Download",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenAI": {
+        "main": [
+          [
+            {
+              "node": "Google Sheets1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "utwórz folder z data nagrań": {
+        "main": [
+          [
+            {
+              "node": "skopiuj szablon",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "skopiuj szablon": {
+        "main": [
+          [
+            {
+              "node": "idFileSheets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If qTrueFolderExists": {
+        "main": [
+          [
+            {
+              "node": "Google qFileExists",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "utwórz folder z data nagrań",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google qFolderExists": {
+        "main": [
+          [
+            {
+              "node": "If qTrueFolderExists",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If qFileExists": {
+        "main": [
+          [
+            {
+              "node": "idFileSheets",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "skopiuj szablon",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google qFileExists": {
+        "main": [
+          [
+            {
+              "node": "If qFileExists",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sheets addRows": {
+        "main": [
+          [
+            {
+              "node": "Google GetRowBrak",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "idFileSheets": {
+        "main": [
+          [
+            {
+              "node": "getFolderId",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "getFolderId": {
+        "main": [
+          [
+            {
+              "node": "Rec HTTP Req",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Sheets1": {
+        "main": [
+          [
+            {
+              "node": "Google GetRowBrak",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If": {
+        "main": [
+          [
+            {
+              "node": "Google Sheets",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Loop Over Items",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Sheets": {
+        "main": [
+          [
+            {
+              "node": "Code1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code1": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent": {
+        "main": [
+          [
+            {
+              "node": "HTTP Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google GetRowBrak": {
+        "main": [
+          [
+            {
+              "node": "If",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mistral Cloud Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    },
+    "staticData": null,
+    "meta": null,
+    "pinData": {},
+    "versionId": "466d8c04-ddf1-4612-8f36-deee7cb50e67",
+    "triggerCount": 0,
+    "tags": [
+      {
+        "createdAt": "2025-05-26T16:54:04.332Z",
+        "updatedAt": "2025-05-26T16:54:04.332Z",
+        "id": "YqCw0toLUxCun9WN",
+        "name": "nagrywarka"
+      }
+    ]
+  }
+]
