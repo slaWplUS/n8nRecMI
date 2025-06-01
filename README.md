@@ -471,3 +471,4 @@ return [{ json: { treść } }];
    * Dodatkowa korzyść: pełna przejrzystość i ścieżka audytu – każdy krok zapisany w Google Drive + Google Sheets.
 
 ---
+![Nagrywarka+MultiInfo+n8n](download.png)
