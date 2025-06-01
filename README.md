@@ -1,4 +1,4 @@
-# n8nRecMI
+# n8n+Nagrywarka+MultiInfo+AI
 
 # n8n Narywarka Multiinfo PLUS
 
