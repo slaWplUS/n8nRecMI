@@ -1,12 +1,11 @@
 # n8nRecMI
 
 # n8n Narywarka Multiinfo PLUS
-workflow n8n
-### Mój Niesamowity Przepływ Pracy n8n
 
-Oto wizualizacja przepływu pracy:
+### Przepływ  n8n
 
-![Opis przepływu pracy](15_34_24-Arc.png)
+
+![Opis przepływu pracy](00001.png)
 
 Możesz pobrać plik JSON tego przepływu pracy [tutaj](ścieżka/do/twojego/pliku.json) i zaimportować go do swojej instancji n8n.
 
