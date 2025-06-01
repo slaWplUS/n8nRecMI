@@ -7,7 +7,7 @@
 
 ![Opis przepływu pracy](00001.png)
 
-Możesz pobrać plik JSON tego przepływu pracy [tutaj](ścieżka/do/twojego/pliku.json) i zaimportować go do swojej instancji n8n.
+Możesz pobrać plik JSON tego przepływu pracy [tutaj](recPlk_gh.json) i zaimportować go do swojej instancji n8n.
 
 ---
 
